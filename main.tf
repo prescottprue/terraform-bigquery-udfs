@@ -45,7 +45,7 @@ const arrayRes = JSON.parse(docsStr).reduce((acc, doc, ind) => {
       internal_form_version: internalVersion,
       inputs,
     };
-    if (template && template.form && template.form.form_library === 'CAR') {
+    if (template && !template.useDraft && template.form && template.form.form_library === 'CAR') {
       acc.push(JSON.stringify(dataObj));
     }
   }
