@@ -21,11 +21,11 @@ const arrayRes = JSON.parse(docsStr).reduce((acc, doc, ind) => {
     doc.pages.forEach((page) => {
       if (page.inputs) {
         Object.values(page.inputs).forEach((input) => {
-          if (input && (input.name || input.value || input.carReportingName)) {
+          if (input && (input.name || input.value || input.reportingName)) {
             inputs.push({
               name: input.name,
               value: input.value,
-              carReportingName: input.carReportingName
+              reportingName: input.reportingName
             });
           }
         });
@@ -58,21 +58,21 @@ RETURNS STRING LANGUAGE js AS """
 const arrRes = JSON.parse(input)
   .filter((i) => i !== null && i.form && i.form.form_version && i.form.form_version.external && i.updatedAt)
   .map((item) => item.form.form_version.external + '-' + item.updatedAt)
-return arrRes.length ? arrRes : null
+return arrRes.length ? arrRes[0] : null
 """;
 CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.mapGetFormVersion`(input STRING, getPath STRING)
 RETURNS STRING LANGUAGE js AS """
 const arrRes = JSON.parse(input)
     .filter((i) => i !== null && i.form && i.form.form_version && i.form.form_version[getPath])
     .map((item) => item.form.form_version[getPath])
-return arrRes.length ? arrRes : null
+return arrRes.length ? arrRes[0] : null
 """;
 CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.mapGetForm`(input STRING, getPath STRING)
 RETURNS STRING LANGUAGE js AS """
 const arrRes = JSON.parse(input)
     .filter((i) => i !== null && i.form && i.form[getPath])
     .map((item) => item.form[getPath])
-return arrRes.length ? arrRes : null
+return arrRes.length ? arrRes[0] : null
 """;
 EOF
 }
