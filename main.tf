@@ -13,19 +13,21 @@ variable dataset_id {
 locals {
   my_udf_definition = <<EOF
 CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.getInputsFromDocs`(docsStr STRING, templatesStr STRING)
-RETURNS ARRAY<STRING> LANGUAGE js AS """
+RETURNS STRING LANGUAGE js AS """
 const templates = JSON.parse(templatesStr);
-return JSON.parse(docsStr).reduce((acc, doc, ind) => {
+const arrayRes = JSON.parse(docsStr).reduce((acc, doc, ind) => {
   if (doc.pages) {
     const inputs = [];
     doc.pages.forEach((page) => {
       if (page.inputs) {
         Object.values(page.inputs).forEach((input) => {
-          inputs.push({
-            name: input && input.name,
-            value: input && input.value,
-            carReportingName: input && input.carReportingName
-          });
+          if (input && (input.name || input.value || input.carReportingName)) {
+            inputs.push({
+              name: input.name,
+              value: input.value,
+              carReportingName: input.carReportingName
+            });
+          }
         });
       }
     });
@@ -38,37 +40,39 @@ return JSON.parse(docsStr).reduce((acc, doc, ind) => {
       template.form.form_version.external + '-' + template.updatedAt;
     const dataObj = {
       external_form_version:
-        template && template.form && template.form.form_version,
+        template && template.form && template.form.form_version && template.form.form_version.external,
       form_library: template && template.form && template.form.form_library,
       internal_form_version: internalVersion,
       inputs,
     };
-    acc.push(JSON.stringify(dataObj));
+    if (template && template.form && template.form.form_library === 'CAR') {
+      acc.push(JSON.stringify(dataObj));
+    }
   }
   return acc;
 }, []);
-""";
-CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.firstItem`(input ARRAY<STRING>)
-RETURNS STRING LANGUAGE js AS """
-return input[0]
+return JSON.stringify({ docs: arrayRes })
 """;
 CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.internalFormVersion`(input STRING)
-RETURNS ARRAY<STRING> LANGUAGE js AS """
-return JSON.parse(input)
+RETURNS STRING LANGUAGE js AS """
+const arrRes = JSON.parse(input)
   .filter((i) => i !== null && i.form && i.form.form_version && i.form.form_version.external && i.updatedAt)
   .map((item) => item.form.form_version.external + '-' + item.updatedAt)
+return arrRes.length ? arrRes : null
 """;
 CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.mapGetFormVersion`(input STRING, getPath STRING)
-RETURNS ARRAY<STRING> LANGUAGE js AS """
-return JSON.parse(input)
+RETURNS STRING LANGUAGE js AS """
+const arrRes = JSON.parse(input)
     .filter((i) => i !== null && i.form && i.form.form_version && i.form.form_version[getPath])
     .map((item) => item.form.form_version[getPath])
+return arrRes.length ? arrRes : null
 """;
 CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.mapGetForm`(input STRING, getPath STRING)
-RETURNS ARRAY<STRING> LANGUAGE js AS """
-return JSON.parse(input)
+RETURNS STRING LANGUAGE js AS """
+const arrRes = JSON.parse(input)
     .filter((i) => i !== null && i.form && i.form[getPath])
     .map((item) => item.form[getPath])
+return arrRes.length ? arrRes : null
 """;
 EOF
 }
@@ -81,3 +85,5 @@ resource "null_resource" "my_udf_resource" {
     command     = local.my_udf_definition
   }
 }
+
+// 
