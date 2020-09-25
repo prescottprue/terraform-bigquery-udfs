@@ -55,24 +55,30 @@ return JSON.stringify({ docs: arrayRes })
 """;
 CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.internalFormVersion`(input STRING)
 RETURNS STRING LANGUAGE js AS """
-const arrRes = JSON.parse(input)
-  .filter((i) => i !== null && i.form && i.form.form_version && i.form.form_version.external && i.updatedAt)
-  .map((item) => item.form.form_version.external + '-' + item.updatedAt)
-return arrRes.length ? arrRes[0] : null
+const originalArr = JSON.parse(input)
+const item = originalArr && originalArr[0]
+return !item.useDraft &&
+      item.updatedAt &&
+      item.form &&
+      item.form.form_version &&
+      item.form.form_version.external &&
+      item.form.form_version.external + '-' + item.updatedAt || null
 """;
 CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.mapGetFormVersion`(input STRING, getPath STRING)
 RETURNS STRING LANGUAGE js AS """
-const arrRes = JSON.parse(input)
-    .filter((i) => i !== null && i.form && i.form.form_version && i.form.form_version[getPath])
-    .map((item) => item.form.form_version[getPath])
-return arrRes.length ? arrRes[0] : null
+const originalArr = JSON.parse(input)
+const item = originalArr && originalArr[0]
+return !item.useDraft &&
+      item.updatedAt &&
+      item.form &&
+      item.form.form_version &&
+      item.form.form_version[getPath] || null
 """;
 CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.mapGetForm`(input STRING, getPath STRING)
 RETURNS STRING LANGUAGE js AS """
-const arrRes = JSON.parse(input)
-    .filter((i) => i !== null && i.form && i.form[getPath])
-    .map((item) => item.form[getPath])
-return arrRes.length ? arrRes[0] : null
+const originalArr = JSON.parse(input)
+const item = originalArr && originalArr[0]
+return !item.useDraft && item.form && item.form[getPath] || null
 """;
 EOF
 }
