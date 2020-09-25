@@ -21,9 +21,8 @@ const arrayRes = JSON.parse(docsStr).reduce((acc, doc, ind) => {
     doc.pages.forEach((page) => {
       if (page.inputs) {
         Object.values(page.inputs).forEach((input) => {
-          if (input && (input.name || input.value || input.reportingName)) {
+          if (input && input.reportingName) {
             inputs.push({
-              name: input.name,
               value: input.value,
               reportingName: input.reportingName
             });
