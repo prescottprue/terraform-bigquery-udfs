@@ -88,7 +88,7 @@ return !doc.useDraft &&
       template.form.form_version &&
       template.form.form_version[getPath] || null
 """;
-CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.mapGetForm`(input STRING, getPath STRING)
+CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.mapGetForm`(docStr STRING, templatesStr STRING, getPath STRING)
 RETURNS STRING LANGUAGE js AS """
 const originalArr = JSON.parse(input)
 const item = originalArr && originalArr[0]
