@@ -21,14 +21,17 @@ const arrayRes = JSON.parse(docsStr).reduce((acc, doc, ind) => {
     doc.pages.forEach((page) => {
       if (page && page.inputs) {
         Object.values(page.inputs).forEach((input) => {
-          if (input && ((input.reportingName !== '' && input.reportingName) && input.value)) {
-            if (input.type === 'radio' && input.options) {
+          if (input && ((input.reportingName !== '' && input.reportingName) || (input.type === 'radio' && input.value))) {
+            if (input.type === 'radio' && input.options && input.value) {
               Object.keys(input.options).forEach((optionIdx) => {
-                if (input.options[optionIdx].reportingName && input.options[optionIdx].value) {
+                if (input.options[optionIdx].reportingName && input.options[optionIdx].reportingName !== '' && input.options[optionIdx].value) {
                   const optionReportingName = input.options[optionIdx].reportingName;
-                  inputs.push({
-                    [optionReportingName]: input.options[optionIdx].value,
-                  });
+                  const optionReportingValue = input.options[optionIdx].value;
+                  if (input.value === optionReportingValue) {
+                    inputs.push({
+                      [optionReportingName]: true,
+                    });
+                  }
                 }
               });
             } else {
@@ -55,8 +58,8 @@ const arrayRes = JSON.parse(docsStr).reduce((acc, doc, ind) => {
       internal_form_version: internalVersion,
       inputs,
     };
-    if (doc && !doc.archived && !doc.useDraft && template && template.form && template.form.form_library === 'CAR') {
-      acc.push(JSON.stringify(dataObj));
+    if (doc && !doc.archived && !doc.useDraft && template && template.form && template.form.isReadyForReporting && template.form.form_library === 'CAR') {
+      acc.push(dataObj);
     }
   }
   return acc;
@@ -72,6 +75,7 @@ const template = templatesStrArr && templatesStrArr[0]
 return !doc.useDraft &&
       template.updatedAt &&
       template.form &&
+      template.form.isReadyForReporting &&
       template.form.form_version &&
       template.form.form_version.external &&
       template.form.form_version.external + '-' + template.updatedAt || null
@@ -85,14 +89,17 @@ const template = templatesStrArr && templatesStrArr[0]
 return !doc.useDraft &&
       template.updatedAt &&
       template.form &&
+      template.form.isReadyForReporting &&
       template.form.form_version &&
       template.form.form_version[getPath] || null
 """;
 CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.mapGetForm`(docStr STRING, templatesStr STRING, getPath STRING)
 RETURNS STRING LANGUAGE js AS """
-const originalArr = JSON.parse(input)
-const item = originalArr && originalArr[0]
-return !item.useDraft && item.form && item.form[getPath] || null
+const docStrArr = JSON.parse(docStr)
+const templatesStrArr = JSON.parse(templatesStr)
+const doc = docStrArr && docStrArr[0]
+const template = templatesStrArr && templatesStrArr[0]
+return !doc.useDraft && template.form && template.form.isReadyForReporting && template.form[getPath] || null
 """;
 EOF
 }
