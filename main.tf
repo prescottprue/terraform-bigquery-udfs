@@ -21,7 +21,7 @@ const arrayRes = JSON.parse(docsStr).reduce((acc, doc, ind) => {
     doc.pages.forEach((page) => {
       if (page && page.inputs) {
         Object.values(page.inputs).forEach((input) => {
-          if (input && ((input.reportingName !== '' && input.reportingName) || input.type === 'radio' && input.value)) {
+          if (input && ((input.reportingName !== '' && input.reportingName) || (input.type === 'radio' && input.value))) {
             if (input.type === 'radio' && input.options && input.value) {
               Object.keys(input.options).forEach((optionIdx) => {
                 if (input.options[optionIdx].reportingName && input.options[optionIdx].reportingName !== '' && input.options[optionIdx].value) {
