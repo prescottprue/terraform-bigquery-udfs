@@ -16,8 +16,8 @@ CREATE OR REPLACE FUNCTION `${var.project_name}.${var.dataset_id}.getInputsFromD
 RETURNS STRING LANGUAGE js AS """
 const templates = JSON.parse(templatesStr);
 const arrayRes = JSON.parse(docsStr).reduce((acc, doc, ind) => {
-  if (doc.pages) {
-    const inputs = [];
+  if (doc.pages && Array.isArray(doc.pages)) {
+    const inputs = {};
     doc.pages.forEach((page) => {
       if (page && page.inputs) {
         Object.values(page.inputs).forEach((input) => {
@@ -28,16 +28,12 @@ const arrayRes = JSON.parse(docsStr).reduce((acc, doc, ind) => {
                   const optionReportingName = input.options[optionIdx].reportingName;
                   const optionReportingValue = input.options[optionIdx].value;
                   if (input.value === optionReportingValue) {
-                    inputs.push({
-                      [optionReportingName]: true,
-                    });
+                    inputs[optionReportingName] = true;
                   }
                 }
               });
             } else {
-                inputs.push({
-                [input.reportingName]: input.value,
-              });
+              inputs[input.reportingName] = input.value;
             }
           }
         });
